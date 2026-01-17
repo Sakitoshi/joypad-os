@@ -197,6 +197,53 @@ static const profile_t gc_profile_mkwii = {
 };
 
 // ============================================================================
+// PROFILE: Mario Kart DD - Custom mapping for PS5 controller
+// ============================================================================
+// Circle→A (Drive), X→B (Brake), Triangle→Y (Look Back)
+// R1→L (Drift), L2→D-Up (Wheelie), L1→Z (Item)
+
+static const button_map_entry_t gc_mkdd_map[] = {
+    // Face buttons
+    MAP_BUTTON(JP_BUTTON_B1, GC_BUTTON_B),      // X/Cross → GC B (Brake)
+    MAP_BUTTON(JP_BUTTON_B2, GC_BUTTON_A),      // Circle → GC A (Drive)
+    MAP_BUTTON(JP_BUTTON_B3, GC_BUTTON_Y),      // Square → GC Y
+    MAP_BUTTON(JP_BUTTON_B4, GC_BUTTON_Y),      // Triangle → GC Y (Look Back)
+
+    // L1 → Z (Use/Hold Item)
+    MAP_BUTTON(JP_BUTTON_L1, GC_BUTTON_Z),
+
+    // R1 → L with full analog (Drift)
+    MAP_BUTTON_ANALOG(JP_BUTTON_R1, GC_BUTTON_L, ANALOG_TARGET_L2_FULL, 0),
+
+    // L2 → D-Pad Up (Wheelie)
+    MAP_BUTTON(JP_BUTTON_L2, GC_BUTTON_DU),
+
+    // System
+    MAP_DISABLED(JP_BUTTON_S1),
+    MAP_BUTTON(JP_BUTTON_S2, GC_BUTTON_START),
+};
+
+static const profile_t gc_profile_mkdd = {
+    .name = "mkdd",
+    .description = "MK DD: R1→L(drift), L2→DUp, L1→Z",
+    .button_map = gc_mkdd_map,
+    .button_map_count = sizeof(gc_mkdd_map) / sizeof(gc_mkdd_map[0]),
+    .l2_behavior = TRIGGER_DISABLED,          // L2 used as button, not trigger
+    .r2_behavior = TRIGGER_PASSTHROUGH,
+    .l2_threshold = 64,                       // Low threshold for responsive wheelie
+    .r2_threshold = 250,
+    .l2_analog_value = 0,
+    .r2_analog_value = 0,
+    .left_stick_sensitivity = 1.0f,
+    .right_stick_sensitivity = 1.0f,
+    .left_stick_modifiers = NULL,
+    .left_stick_modifier_count = 0,
+    .right_stick_modifiers = NULL,
+    .right_stick_modifier_count = 0,
+    .adaptive_triggers = false,
+};
+
+// ============================================================================
 // PROFILE: Fighting Games
 // ============================================================================
 // L1→C-Up (for macros), right stick disabled
@@ -248,6 +295,7 @@ static const profile_t gc_profiles[] = {
     gc_profile_snes,
     gc_profile_ssbm,
     gc_profile_mkwii,
+    gc_profile_mkdd,
     gc_profile_fighting,
 };
 
