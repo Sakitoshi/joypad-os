@@ -218,6 +218,9 @@ static const button_map_entry_t gc_mkdd_map[] = {
     // L2 → D-Pad Up (Wheelie)
     MAP_BUTTON(JP_BUTTON_L2, GC_BUTTON_DU),
 
+    // Disable D-Pad Up input (L2 handles wheelie)
+    MAP_DISABLED(JP_BUTTON_DU),
+
     // System
     MAP_DISABLED(JP_BUTTON_S1),
     MAP_BUTTON(JP_BUTTON_S2, GC_BUTTON_START),
@@ -291,11 +294,11 @@ static const profile_t gc_profile_fighting = {
 // ============================================================================
 
 static const profile_t gc_profiles[] = {
+    gc_profile_mkdd,        // Custom MK profile as default for this build
     gc_profile_default,
     gc_profile_snes,
     gc_profile_ssbm,
     gc_profile_mkwii,
-    gc_profile_mkdd,
     gc_profile_fighting,
 };
 
