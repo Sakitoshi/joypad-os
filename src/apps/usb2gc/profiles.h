@@ -24,48 +24,49 @@
 // PROFILE: Mario Kart Wii - PS5 -> GameCube (Competitive)
 // ============================================================================
 // PS5 bindings (via USB2GC):
-//   Circle -> A (accelerate)
-//   Cross  -> B (brake / reverse)
-//   R1     -> R (drift)
-//   L1     -> X (use item)
-//   L2     -> D-pad Up (wheelie / up trick)
-//   D-pad Left  -> D-pad Left  (left trick)
-//   D-pad Down  -> D-pad Down  (down trick)
-//   D-pad Right -> D-pad Right (right trick)
-//   Options -> Start
-//
-// Notes:
-// - This is a pure PS5 -> GCN profile (what MKWii sees is a GameCube pad).
-// - Digital R is preferred for consistent drifting in competitive MKWii.
+//   Circle    -> A (accelerate)
+//   Square    -> B
+//   Triangle  -> X, Y
+//   L2        -> D-pad Up (wheelie / up trick)
+//   L1        -> L (drift - analog + digital)
+//   R1        -> B + R digital
+//   Cross (X) -> R analog
+//   OPTIONS   -> Start
+//   SHARE     -> disabled
 
 static const button_map_entry_t gc_mkwii_map[] = {
     // Face buttons
     MAP_BUTTON(JP_BUTTON_B2, GC_BUTTON_A),   // Circle -> A (accelerate)
-    MAP_BUTTON(JP_BUTTON_B1, GC_BUTTON_B),   // Cross  -> B (brake)
+    MAP_BUTTON(JP_BUTTON_B3, GC_BUTTON_B),   // Square -> B
+    MAP_BUTTON(JP_BUTTON_B4, GC_BUTTON_X),   // Triangle -> X
+    MAP_BUTTON(JP_BUTTON_B4, GC_BUTTON_Y),   // Triangle -> Y (also)
 
-    // Core controls
-    MAP_BUTTON(JP_BUTTON_R1, GC_BUTTON_R),   // R1 -> R (drift)
-    MAP_BUTTON(JP_BUTTON_L1, GC_BUTTON_X),   // L1 -> X (use item)
+    // L2 -> D-pad Up (wheelie/trick)
+    MAP_BUTTON(JP_BUTTON_L2, GC_BUTTON_DU),
 
-    // Wheelie / trick (up)
-    MAP_BUTTON(JP_BUTTON_L2, GC_BUTTON_DU),  // L2 -> D-pad Up
+    // L1 -> L trigger (drift) with full analog
+    MAP_BUTTON_ANALOG(JP_BUTTON_L1, GC_BUTTON_L, ANALOG_TARGET_L2_FULL, 0),
 
-    // Trick directions (D-pad passes through by default)
+    // R1 -> B + R digital
+    MAP_BUTTON(JP_BUTTON_R1, GC_BUTTON_B),
+    MAP_BUTTON_ANALOG(JP_BUTTON_R1, GC_BUTTON_R, ANALOG_TARGET_NONE, 0),
+
+    // Cross (X) -> R analog only
+    MAP_ANALOG_ONLY(JP_BUTTON_B1, ANALOG_TARGET_R2_FULL),
 
     // System
     MAP_BUTTON(JP_BUTTON_S2, GC_BUTTON_START), // Options -> Start
-    MAP_DISABLED(JP_BUTTON_S1),                // Share -> disabled (often profile switch)
+    MAP_DISABLED(JP_BUTTON_S1),                // Share -> disabled
 };
 
 static const profile_t gc_profile_mkwii = {
     .name = "mkwii_ps5_comp",
-    .description = "MKWii PS5->GCN: O=A, X=B, R1=Drift, L1=Item, L2=Wheelie",
+    .description = "MKWii PS5: L1=Drift, R1=B+R, X=R analog, L2=Wheelie",
     .button_map = gc_mkwii_map,
     .button_map_count = sizeof(gc_mkwii_map) / sizeof(gc_mkwii_map[0]),
 
-    // Triggers
-    // We map L2 as a button to D-pad Up, so set it to instant so it actuates immediately.
-    .l2_behavior = TRIGGER_INSTANT,
+    // Triggers - L2 used as button, disable analog passthrough
+    .l2_behavior = TRIGGER_DIGITAL_ONLY,
     .r2_behavior = TRIGGER_DISABLED,
 
     .l2_threshold = 10,
@@ -74,7 +75,7 @@ static const profile_t gc_profile_mkwii = {
     .l2_analog_value = 0,
     .r2_analog_value = 0,
 
-    // Sticks (leave default)
+    // Sticks
     .left_stick_sensitivity = 1.0f,
     .right_stick_sensitivity = 1.0f,
     .left_stick_modifiers = NULL,
@@ -82,7 +83,6 @@ static const profile_t gc_profile_mkwii = {
     .right_stick_modifiers = NULL,
     .right_stick_modifier_count = 0,
 
-    // Optional: keep off for consistency
     .adaptive_triggers = false,
 };
 
