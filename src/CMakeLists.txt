@@ -189,13 +189,25 @@ set(BTSTACK_SOURCES
 # USB Device sources (for USB output apps)
 set(USB_DEVICE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/usbd.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/hid_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/xinput_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/switch_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/ps3_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/psclassic_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/ps4_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/xid_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/xbone_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/xac_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/kbmouse_mode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/modes/gc_adapter_mode.c
     ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/cdc/cdc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/cdc/cdc_protocol.c
     ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/cdc/cdc_commands.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/tud_xid.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/tud_xinput.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/tud_xbone.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/xgip_protocol.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/drivers/tud_xid.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/drivers/tud_xinput.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/drivers/tud_xbone.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/drivers/xgip_protocol.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/usb/usbd/kbmouse/kbmouse.c
 )
 
 # SNES host sources
@@ -678,7 +690,11 @@ pico_generate_pio_header(joypad_n642usb ${CMAKE_CURRENT_LIST_DIR}/lib/joybus-pio
 
 # --- GC2USB (GameCube -> USB HID) ---
 add_executable(joypad_gc2usb)
-target_compile_definitions(joypad_gc2usb PRIVATE CONFIG_GC2USB=1 CONFIG_USB=1 DISABLE_USB_HOST=1 GC_PIN_DATA=29)
+target_compile_definitions(joypad_gc2usb PRIVATE CONFIG_GC2USB=1 CONFIG_USB=1 DISABLE_USB_HOST=1 GC_PIN_DATA=29
+    PICO_DEFAULT_UART=0
+    PICO_DEFAULT_UART_TX_PIN=12
+    PICO_DEFAULT_UART_RX_PIN=13
+)
 target_sources(joypad_gc2usb PUBLIC ${CORE_SOURCES} ${USB_DEVICE_SOURCES}
     ${GC_HOST_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/apps/gc2usb/app.c

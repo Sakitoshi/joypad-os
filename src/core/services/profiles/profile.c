@@ -54,6 +54,18 @@ static player_combo_state_t player_combo[MAX_PLAYERS] = {0};
 // Timing constants
 static const uint32_t INITIAL_HOLD_TIME_MS = 2000;  // Must hold 2 seconds for first trigger
 
+// SOCD last-input-wins state tracking (per player)
+typedef struct {
+    uint8_t ud_last;    // 0=none, 1=up, 2=down
+    uint8_t lr_last;    // 0=none, 1=left, 2=right
+    bool up_was_pressed;
+    bool down_was_pressed;
+    bool left_was_pressed;
+    bool right_was_pressed;
+} socd_state_t;
+
+static socd_state_t socd_state[MAX_PLAYERS] = {0};
+
 // Callbacks
 static uint8_t (*get_player_count)(void) = NULL;
 static profile_switch_callback_t on_switch_callback = NULL;
@@ -611,6 +623,113 @@ void profile_save_to_flash(output_target_t output)
 }
 
 // ============================================================================
+// SOCD RESOLUTION
+// ============================================================================
+
+// Apply SOCD cleaning to D-pad buttons
+// player_index: for last-win state tracking (use 0 for legacy/single player)
+// Returns the cleaned button state
+static uint32_t apply_socd(uint32_t buttons, socd_mode_t mode, uint8_t player_index)
+{
+    if (mode == SOCD_PASSTHROUGH || player_index >= MAX_PLAYERS) {
+        return buttons;
+    }
+
+    bool up = (buttons & JP_BUTTON_DU) != 0;
+    bool down = (buttons & JP_BUTTON_DD) != 0;
+    bool left = (buttons & JP_BUTTON_DL) != 0;
+    bool right = (buttons & JP_BUTTON_DR) != 0;
+
+    socd_state_t* state = &socd_state[player_index];
+
+    switch (mode) {
+        case SOCD_NEUTRAL:
+            // Cancel opposite directions (both become neutral)
+            if (up && down) {
+                buttons &= ~(JP_BUTTON_DU | JP_BUTTON_DD);
+            }
+            if (left && right) {
+                buttons &= ~(JP_BUTTON_DL | JP_BUTTON_DR);
+            }
+            break;
+
+        case SOCD_UP_PRIORITY:
+            // U+D = U (up wins), L+R = neutral
+            if (up && down) {
+                buttons &= ~JP_BUTTON_DD;  // Remove down, keep up
+            }
+            if (left && right) {
+                buttons &= ~(JP_BUTTON_DL | JP_BUTTON_DR);  // Cancel both
+            }
+            break;
+
+        case SOCD_LAST_WIN:
+            // Last input wins - track rising edges
+            // Up/Down
+            if (up && down) {
+                // Both pressed - determine which was pressed last
+                if (up && !state->up_was_pressed) {
+                    // Up just pressed
+                    state->ud_last = 1;
+                }
+                if (down && !state->down_was_pressed) {
+                    // Down just pressed
+                    state->ud_last = 2;
+                }
+                // Apply last winner
+                if (state->ud_last == 1) {
+                    buttons &= ~JP_BUTTON_DD;  // Keep up
+                } else if (state->ud_last == 2) {
+                    buttons &= ~JP_BUTTON_DU;  // Keep down
+                }
+            } else if (up) {
+                state->ud_last = 1;
+            } else if (down) {
+                state->ud_last = 2;
+            } else {
+                state->ud_last = 0;
+            }
+
+            // Left/Right
+            if (left && right) {
+                // Both pressed - determine which was pressed last
+                if (left && !state->left_was_pressed) {
+                    // Left just pressed
+                    state->lr_last = 1;
+                }
+                if (right && !state->right_was_pressed) {
+                    // Right just pressed
+                    state->lr_last = 2;
+                }
+                // Apply last winner
+                if (state->lr_last == 1) {
+                    buttons &= ~JP_BUTTON_DR;  // Keep left
+                } else if (state->lr_last == 2) {
+                    buttons &= ~JP_BUTTON_DL;  // Keep right
+                }
+            } else if (left) {
+                state->lr_last = 1;
+            } else if (right) {
+                state->lr_last = 2;
+            } else {
+                state->lr_last = 0;
+            }
+
+            // Update previous state for next frame
+            state->up_was_pressed = up;
+            state->down_was_pressed = down;
+            state->left_was_pressed = left;
+            state->right_was_pressed = right;
+            break;
+
+        default:
+            break;
+    }
+
+    return buttons;
+}
+
+// ============================================================================
 // BUTTON MAPPING APPLICATION
 // ============================================================================
 
@@ -774,6 +893,12 @@ void profile_apply(const profile_t* profile,
     // Output is active-high
     output->buttons = output_buttons;
 
+    // Apply SOCD cleaning if configured
+    if (profile->socd_mode != SOCD_PASSTHROUGH) {
+        // Use player 0 for SOCD state tracking (legacy single-player path)
+        output->buttons = apply_socd(output->buttons, profile->socd_mode, 0);
+    }
+
     // Determine effective left stick sensitivity (check modifiers first)
     float left_sens = profile->left_stick_sensitivity;
     for (uint8_t i = 0; i < profile->left_stick_modifier_count; i++) {
@@ -828,6 +953,10 @@ void profile_apply(const profile_t* profile,
     // Note: active-high (bit set = pressed)
     if (!output->l2_analog_override) {
         switch (profile->l2_behavior) {
+            case TRIGGER_DISABLED:
+                output->l2_analog = 0;
+                output->buttons &= ~JP_BUTTON_L2;  // Clear digital too
+                break;
             case TRIGGER_DIGITAL_ONLY:
                 output->l2_analog = 0;
                 break;
@@ -841,6 +970,10 @@ void profile_apply(const profile_t* profile,
                     output->l2_analog = profile->l2_analog_value;
                 }
                 break;
+            case TRIGGER_INSTANT:
+                // Analog zeroed, digital handled by threshold logic elsewhere
+                output->l2_analog = 0;
+                break;
             case TRIGGER_PASSTHROUGH:
             default:
                 // Already set above
@@ -850,6 +983,10 @@ void profile_apply(const profile_t* profile,
 
     if (!output->r2_analog_override) {
         switch (profile->r2_behavior) {
+            case TRIGGER_DISABLED:
+                output->r2_analog = 0;
+                output->buttons &= ~JP_BUTTON_R2;  // Clear digital too
+                break;
             case TRIGGER_DIGITAL_ONLY:
                 output->r2_analog = 0;
                 break;
@@ -862,6 +999,10 @@ void profile_apply(const profile_t* profile,
                 if (input_buttons & JP_BUTTON_R2) {
                     output->r2_analog = profile->r2_analog_value;
                 }
+                break;
+            case TRIGGER_INSTANT:
+                // Analog zeroed, digital handled by threshold logic elsewhere
+                output->r2_analog = 0;
                 break;
             case TRIGGER_PASSTHROUGH:
             default:
