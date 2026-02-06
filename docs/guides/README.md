@@ -8,9 +8,9 @@ DIY guides for building your own Joypad adapters.
 - [x] [USB2USB](usb2usb.md) — USB controller → USB (SInput) ⭐ Easy
 - [x] [BT2USB](bt2usb.md) — Bluetooth controller → USB ⭐ Easy
 - [ ] DC2USB — Dreamcast controller → USB ⭐⭐ Medium
-- [ ] GC2USB — GameCube controller → USB ⭐⭐ Medium
-- [ ] N642USB — N64 controller → USB ⭐⭐ Medium
-- [ ] SNES2USB — SNES controller → USB ⭐⭐ Medium
+- [x] [GC2USB](gc2usb.md) — GameCube controller → USB ⭐⭐ Medium
+- [x] [N642USB](n642usb.md) — N64 controller → USB ⭐⭐ Medium
+- [x] [SNES2USB](snes2usb.md) — SNES controller → USB ⭐⭐ Medium
 
 ### Console Output (play on retro consoles)
 - [x] [USB2GC](usb2gc.md) — USB controller → GameCube ⭐⭐ Medium
