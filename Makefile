@@ -212,6 +212,7 @@ APP_usb2n64_kb2040 := kb2040 n64 usb2n64_kb2040 USB/BT N64
 APP_wifi2usb_pico_w := pico_w wifi2usb wifi2usb_pico_w WiFi USB
 APP_wifi2usb_pico2_w := pico2_w wifi2usb wifi2usb_pico2_w WiFi USB
 APP_snes2usb_kb2040 := kb2040 snes2usb snes2usb_kb2040 SNES USB
+APP_n642usb_pico := pico n642usb n642usb_pico N64 USB
 APP_psx2usb_qtpy := qtpy psx2usb psx2usb_qtpy PS1/PS2 USB
 APP_psx2usb_kb2040 := kb2040 psx2usb psx2usb_kb2040 PS1/PS2 USB
 APP_psx2usb_pico := pico psx2usb psx2usb_pico PS1/PS2 USB
@@ -289,6 +290,7 @@ APPS += bt2nuon_pico2_w
 APPS += bt2n64_pico_w
 APPS += bt2n64_pico2_w
 APPS += snes2usb_kb2040
+APPS += n642usb_pico
 APPS += n642usb_kb2040
 APPS += gc2usb_kb2040
 APPS += gc2usb_rp2040zero
@@ -306,7 +308,13 @@ APPS += controller_fisherprice_v2_kb2040
 APPS += controller_alpakka_pico
 APPS += usb2ami_rp2040zero
 APPS += usb2ami_xiao
+APPS += psx2usb_qtpy
+APPS += psx2usb_kb2040
+APPS += psx2usb_pico
 APPS := $(strip $(APPS))
+
+# Stable apps for release
+# Note: usb2loopy_kb2040, snes23do_rp2040zero excluded until more mature
 
 # Stable apps for release
 # Note: usb2loopy_kb2040, snes23do_rp2040zero excluded until more mature
@@ -412,6 +420,10 @@ help:
 	@echo "  make bt2loopy_pico_w    - Bluetooth -> Loopy (Pico W)"
 	@echo "  make bt2nuon_pico_w     - Bluetooth -> Nuon (Pico W)"
 	@echo "  make bt2n64_pico_w      - Bluetooth -> N64 (Pico W)"
+	@echo "  make bt2usb_esp32s3     - Bluetooth -> USB HID (ESP32-S3, requires ESP-IDF)"
+	@echo "  make wifi2usb_pico_w    - WiFi -> USB HID (Pico W)"
+	@echo "  make snes2usb_kb2040    - SNES -> USB HID (KB2040)"
+	@echo "  make n642usb_kb2040     - N64 -> USB HID (KB2040)"
 	@echo "  make wifi2usb_pico_w    - WiFi -> USB HID (Pico W)"
 	@echo "  make snes2usb_kb2040    - SNES -> USB HID (KB2040)"
 	@echo "  make n642usb_kb2040     - N64 -> USB HID (KB2040)"
@@ -1142,7 +1154,6 @@ flash-controller_btusb_seeed_xiao_nrf52840: controller_btusb_seeed_xiao_nrf52840
 .PHONY: monitor-controller_btusb_seeed_xiao_nrf52840
 monitor-controller_btusb_seeed_xiao_nrf52840:
 	@cd nrf && $(MAKE) monitor
-
 .PHONY: wifi2usb_pico_w
 wifi2usb_pico_w:
 	$(call build_app,wifi2usb_pico_w)
@@ -1166,6 +1177,10 @@ psx2usb_kb2040:
 .PHONY: psx2usb_pico
 psx2usb_pico:
 	$(call build_app,psx2usb_pico)
+
+.PHONY: n642usb_pico
+n642usb_pico:
+	$(call build_app,n642usb_pico)
 
 .PHONY: n642usb_kb2040
 n642usb_kb2040:
@@ -1632,6 +1647,10 @@ flash-psx2usb_kb2040:
 .PHONY: flash-psx2usb_pico
 flash-psx2usb_pico:
 	@$(MAKE) --no-print-directory _flash_app APP_NAME=psx2usb_pico
+
+.PHONY: flash-n642usb_pico
+flash-n642usb_pico:
+	@$(MAKE) --no-print-directory _flash_app APP_NAME=n642usb_pico
 
 .PHONY: flash-n642usb_kb2040
 flash-n642usb_kb2040:
