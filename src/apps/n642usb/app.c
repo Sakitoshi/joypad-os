@@ -14,7 +14,51 @@
 #include "usb/usbd/usbd.h"
 #include "native/host/n64/n64_host.h"
 #include "core/services/leds/leds.h"
+
+#include "core/services/button/button.h"
+#include "core/buttons.h"
+#include "tusb.h"
+#include "pico/stdlib.h"
 #include <stdio.h>
+
+// ============================================================================
+// BUTTON EVENT HANDLER
+// ============================================================================
+
+static void on_button_event(button_event_t event)
+{
+    switch (event) {
+        case BUTTON_EVENT_CLICK:
+            break;
+
+        case BUTTON_EVENT_DOUBLE_CLICK: {
+            // Double-click to cycle USB output mode
+            printf("[app:n642usb] Double-click - switching USB output mode...\n");
+            tud_task();
+            sleep_ms(50);
+            tud_task();
+
+            usb_output_mode_t next = usbd_get_next_mode();
+            printf("[app:n642usb] Switching to %s\n", usbd_get_mode_name(next));
+            usbd_set_mode(next);
+            break;
+        }
+
+        case BUTTON_EVENT_TRIPLE_CLICK:
+            // Triple-click to reset to default HID mode
+            printf("[app:n62usb] Triple-click - resetting to HID mode...\n");
+            if (!usbd_reset_to_hid()) {
+                printf("[app:n642usb] Already in HID mode\n");
+            }
+            break;
+
+        case BUTTON_EVENT_HOLD:
+            break;
+
+        default:
+            break;
+    }
+}
 
 // ============================================================================
 // APP INPUT INTERFACES
@@ -51,6 +95,10 @@ const OutputInterface** app_get_output_interfaces(uint8_t* count)
 void app_init(void)
 {
     printf("[app:n642usb] Initializing N642USB v%s\n", APP_VERSION);
+
+    // Initialize button service
+    button_init();
+    button_set_callback(on_button_event);
 
     // Configure router for N64 -> USB routing
     router_config_t router_cfg = {
@@ -95,6 +143,9 @@ void app_init(void)
 
 void app_task(void)
 {
+    // Process button input
+    button_task();
+
     // Update LED color when USB output mode changes
     static usb_output_mode_t last_led_mode = USB_OUTPUT_MODE_COUNT;
     usb_output_mode_t mode = usbd_get_mode();

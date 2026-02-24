@@ -31,8 +31,8 @@ static uint8_t disconnect_debounce[N64_MAX_PORTS] = {0};  // Debounce brief disc
 static uint32_t prev_buttons[N64_MAX_PORTS] = {0};
 static int8_t prev_stick_x[N64_MAX_PORTS] = {0};
 static int8_t prev_stick_y[N64_MAX_PORTS] = {0};
-static bool prev_l[N64_MAX_PORTS] = {false};
-static bool prev_r[N64_MAX_PORTS] = {false};
+static bool prev_l[N64_MAX_PORTS] = {0};
+static bool prev_r[N64_MAX_PORTS] = {0};
 
 // ============================================================================
 // BUTTON MAPPING: N64 -> JP
@@ -61,7 +61,7 @@ static uint32_t map_n64_to_jp(const n64_report_t* report)
     if (report->z)      buttons |= JP_BUTTON_R1;  // N64 Z -> R1
 
     // Start
-    if (report->start)  buttons |= JP_BUTTON_S2;  // Start -> S2
+    if (report->start)  buttons |= JP_BUTTON_S1;  // Start -> S1 (hack to make start work with profile combos)
 
     // D-pad
     if (report->dpad_up)    buttons |= JP_BUTTON_DU;
@@ -103,6 +103,18 @@ static void map_c_buttons_to_analog(const n64_report_t* report, uint8_t* rx, uin
     if (report->c_right) *rx = 255;
     if (report->c_up)    *ry = 0;    // Up = low Y (inverted from stick)
     if (report->c_down)  *ry = 255;  // Down = high Y
+}
+
+// Convert L and R to analog triggers
+static void map_lr_buttons_to_triggers(const n64_report_t* report, uint8_t* lt, uint8_t* rt)
+{
+    // Default to cero
+    *lt = 0;
+    *rt = 0;
+
+    // L and R buttons act as triggers
+    if (report->l) *lt = 255;
+    if (report->r) *rt = 255;
 }
 
 // ============================================================================
@@ -156,6 +168,8 @@ void n64_host_init_pin(uint8_t data_pin)
     prev_buttons[0] = 0xFFFFFFFF;
     prev_stick_x[0] = 0;
     prev_stick_y[0] = 0;
+    prev_l[0] = 0;
+    prev_r[0] = 0;
     rumble_state[0] = false;
 
     initialized = true;
@@ -212,14 +226,16 @@ void n64_host_task(void)
                     event.analog[ANALOG_LY] = 128;
                     event.analog[ANALOG_RX] = 128;
                     event.analog[ANALOG_RY] = 128;
+                    event.analog[ANALOG_L2] = 0;
+                    event.analog[ANALOG_R2] = 0;
                     router_submit_input(&event);
 
                     // Reset previous state tracking
                     prev_buttons[port] = 0;
                     prev_stick_x[port] = 0;
                     prev_stick_y[port] = 0;
-                    prev_l[port] = false;
-                    prev_r[port] = false;
+                    prev_l[port] = 0;
+                    prev_r[port] = 0;
                 }
             }
         } else {
@@ -266,8 +282,9 @@ void n64_host_task(void)
         map_c_buttons_to_analog(&report, &c_rx, &c_ry);
 
         // N64 has no analog triggers - L/R are digital buttons (L1/R1)
-        uint8_t lt = 0;
-        uint8_t rt = 0;
+        // map them to triggers for convenience.
+        uint8_t lt, rt;
+        map_lr_buttons_to_triggers(&report, &lt, &rt);
 
         // Only submit if state changed
         if (buttons == prev_buttons[port] &&

@@ -30,7 +30,7 @@
 // N64 data pin (joybus single-wire protocol)
 // KB2040: A3 = GPIO29
 #ifndef N64_PIN_DATA
-#define N64_PIN_DATA  29
+#define N64_PIN_DATA  18
 #endif
 #define N64_DATA_PIN  N64_PIN_DATA  // Alias for display
 

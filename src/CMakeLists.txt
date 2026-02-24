@@ -61,7 +61,7 @@ if(EXISTS ${PICO_PIO_USB_PATH})
     )
     target_include_directories(tinyusb_pico_pio_usb INTERFACE ${PICO_PIO_USB_PATH}/src)
     target_link_libraries(tinyusb_pico_pio_usb INTERFACE hardware_pio hardware_dma pico_stdlib)
-    target_compile_definitions(tinyusb_pico_pio_usb INTERFACE PIO_USB_USE_TINYUSB=1 PIO_USB_DP_PIN_DEFAULT=16)
+    target_compile_definitions(tinyusb_pico_pio_usb INTERFACE PIO_USB_USE_TINYUSB=1 PIO_USB_DP_PIN_DEFAULT=0)
     pico_generate_pio_header(tinyusb_pico_pio_usb ${PICO_PIO_USB_PATH}/src/usb_tx.pio)
     pico_generate_pio_header(tinyusb_pico_pio_usb ${PICO_PIO_USB_PATH}/src/usb_rx.pio)
 endif()
@@ -668,7 +668,7 @@ pico_enable_stdio_uart(joypad_usb 1)
 add_executable(joypad_usb_pico)
 target_compile_definitions(joypad_usb_pico PRIVATE
     CONFIG_USB=1
-    PICO_DEFAULT_PIO_USB_DP_PIN=16
+    PICO_DEFAULT_PIO_USB_DP_PIN=0
     BOARD_TUH_RHPORT=1
     USE_BOOTSEL_BUTTON=1
 )
@@ -878,7 +878,10 @@ joypad_target_common(joypad_snes2usb)
 
 # --- N642USB (N64 -> USB HID) ---
 add_executable(joypad_n642usb)
-target_compile_definitions(joypad_n642usb PRIVATE CONFIG_N642USB=1 CONFIG_USB=1 DISABLE_USB_HOST=1 N64_PIN_DATA=29)
+target_compile_definitions(joypad_n642usb PRIVATE CONFIG_N642USB=1 CONFIG_USB=1 DISABLE_USB_HOST=1
+    N64_PIN_DATA=18
+    USE_BOOTSEL_BUTTON=1
+)
 target_sources(joypad_n642usb PUBLIC ${CORE_SOURCES} ${USB_DEVICE_SOURCES}
     ${N64_HOST_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/apps/n642usb/app.c

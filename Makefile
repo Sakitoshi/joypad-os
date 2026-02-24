@@ -113,6 +113,7 @@ APP_bt2usb_pico2_w := pico2_w bt2usb bt2usb_pico2_w Bluetooth USB
 APP_wifi2usb_pico_w := pico_w wifi2usb wifi2usb_pico_w WiFi USB
 APP_wifi2usb_pico2_w := pico2_w wifi2usb wifi2usb_pico2_w WiFi USB
 APP_snes2usb_kb2040 := kb2040 snes2usb snes2usb_kb2040 SNES USB
+APP_n642usb_pico := pico n642usb n642usb_pico N64 USB
 APP_n642usb_kb2040 := kb2040 n642usb n642usb_kb2040 N64 USB
 APP_gc2usb_kb2040 := kb2040 gc2usb gc2usb_kb2040 GameCube USB
 APP_neogeo2usb_kb2040 := kb2040 neogeo2usb neogeo2usb_kb2040 NEOGEO USB
@@ -124,7 +125,7 @@ APP_controller_macropad := macropad controller_macropad controller_macropad GPIO
 
 # All apps (note: controller_macropad not included - build explicitly with 'make controller_macropad')
 # Note: usb2loopy_kb2040, snes23do_rp2040zero excluded until more mature
-APPS := usb2pce_kb2040 usb2gc_kb2040 usb2gc_rp2040zero usb2nuon_kb2040 usb2dc_kb2040 usb2dc_rp2040zero usb2neogeo_kb2040 usb2neogeo_pico usb2neogeo_rp2040zero n642dc_kb2040 usb23do_rp2040zero usb2uart_kb2040 usb2usb_pico usb2usb_pico_w usb2usb_pico2_w usb2usb_feather usb2usb_rp2040zero usb2usb_rp2350usba bt2usb_pico_w bt2usb_pico2_w snes2usb_kb2040 n642usb_kb2040 gc2usb_kb2040 controller_fisherprice_kb2040 controller_alpakka_pico
+APPS := usb2pce_kb2040 usb2gc_kb2040 usb2gc_rp2040zero usb2nuon_kb2040 usb2dc_kb2040 usb2dc_rp2040zero usb2neogeo_kb2040 usb2neogeo_pico usb2neogeo_rp2040zero n642dc_kb2040 usb23do_rp2040zero usb2uart_kb2040 usb2usb_pico usb2usb_pico_w usb2usb_pico2_w usb2usb_feather usb2usb_rp2040zero usb2usb_rp2350usba bt2usb_pico_w bt2usb_pico2_w snes2usb_kb2040 n642usb_pico n642usb_kb2040 gc2usb_kb2040 controller_fisherprice_kb2040 controller_alpakka_pico
 
 # Stable apps for release
 # Note: usb2loopy_kb2040, snes23do_rp2040zero excluded until more mature
@@ -185,8 +186,6 @@ help:
 	@echo "  make usb2usb_rp2350usba - USB/BT -> USB HID (Waveshare RP2350A)"
 	@echo "  make bt2usb_pico_w      - Bluetooth -> USB HID (Pico W)"
 	@echo "  make bt2usb_esp32s3     - Bluetooth -> USB HID (ESP32-S3, requires ESP-IDF)"
-	@echo "  make uf2-bt2usb_esp32s3       - Build + generate .uf2 for drag-and-drop update"
-	@echo "  make flash-uf2-bt2usb_esp32s3 - Build + flash .uf2 via TinyUF2 drive"
 	@echo "  make wifi2usb_pico_w    - WiFi -> USB HID (Pico W)"
 	@echo "  make snes2usb_kb2040    - SNES -> USB HID (KB2040)"
 	@echo "  make n642usb_kb2040     - N64 -> USB HID (KB2040)"
@@ -384,31 +383,6 @@ flash-bt2usb_esp32s3:
 monitor-bt2usb_esp32s3:
 	@cd esp && $(MAKE) monitor
 
-# --- ESP32-S3 UF2 / Combined targets ---
-.PHONY: uf2-bt2usb_esp32s3
-uf2-bt2usb_esp32s3:
-	@echo "$(YELLOW)Building bt2usb UF2 for ESP32-S3...$(NC)"
-	@cd esp && $(MAKE) uf2
-	@mkdir -p $(RELEASE_DIR)
-	@cp esp/build/joypad_bt2usb.uf2 \
-	    $(RELEASE_DIR)/joypad_$(VERSION_ID)_bt2usb_esp32s3.uf2
-	@echo "$(GREEN)✓ UF2 built: $(RELEASE_DIR)/joypad_$(VERSION_ID)_bt2usb_esp32s3.uf2$(NC)"
-	@echo ""
-
-.PHONY: flash-uf2-bt2usb_esp32s3
-flash-uf2-bt2usb_esp32s3: uf2-bt2usb_esp32s3
-	@if [ ! -d "/Volumes/XIAOS3BOOT" ]; then \
-		echo "$(YELLOW)⚠ /Volumes/XIAOS3BOOT not found$(NC)"; \
-		echo "$(YELLOW)  Put device in TinyUF2 mode:$(NC)"; \
-		echo "$(YELLOW)  - Double-tap reset button$(NC)"; \
-		echo "$(YELLOW)  - Or send BOOTSEL via CDC$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(YELLOW)Flashing UF2 to TinyUF2 drive...$(NC)"
-	@cp $(RELEASE_DIR)/joypad_$(VERSION_ID)_bt2usb_esp32s3.uf2 /Volumes/XIAOS3BOOT/
-	@echo "$(GREEN)✓ Firmware flashed, device will reboot$(NC)"
-	@echo ""
-
 .PHONY: wifi2usb_pico_w
 wifi2usb_pico_w:
 	$(call build_app,wifi2usb_pico_w)
@@ -420,6 +394,10 @@ wifi2usb_pico2_w:
 .PHONY: snes2usb_kb2040
 snes2usb_kb2040:
 	$(call build_app,snes2usb_kb2040)
+
+.PHONY: n642usb_pico
+n642usb_pico:
+	$(call build_app,n642usb_pico)
 
 .PHONY: n642usb_kb2040
 n642usb_kb2040:
@@ -661,6 +639,10 @@ flash-wifi2usb_pico2_w:
 .PHONY: flash-snes2usb_kb2040
 flash-snes2usb_kb2040:
 	@$(MAKE) --no-print-directory _flash_app APP_NAME=snes2usb_kb2040
+
+.PHONY: flash-n642usb_pico
+flash-n642usb_pico:
+	@$(MAKE) --no-print-directory _flash_app APP_NAME=n642usb_pico
 
 .PHONY: flash-n642usb_kb2040
 flash-n642usb_kb2040:
