@@ -94,7 +94,7 @@ if(EXISTS ${PICO_PIO_USB_PATH})
     )
     target_include_directories(tinyusb_pico_pio_usb INTERFACE ${PICO_PIO_USB_PATH}/src)
     target_link_libraries(tinyusb_pico_pio_usb INTERFACE hardware_pio hardware_dma pico_stdlib)
-    target_compile_definitions(tinyusb_pico_pio_usb INTERFACE PIO_USB_USE_TINYUSB=1 PIO_USB_DP_PIN_DEFAULT=0)
+    target_compile_definitions(tinyusb_pico_pio_usb INTERFACE PIO_USB_USE_TINYUSB=1 PIO_USB_DP_PIN_DEFAULT=16)
     pico_generate_pio_header(tinyusb_pico_pio_usb ${PICO_PIO_USB_PATH}/src/usb_tx.pio)
     pico_generate_pio_header(tinyusb_pico_pio_usb ${PICO_PIO_USB_PATH}/src/usb_rx.pio)
 endif()
@@ -1319,6 +1319,7 @@ pico_enable_stdio_uart(joypad_usb_feather_rp2040_usb_host_max3421 1)
 add_executable(joypad_usb_pico)
 target_compile_definitions(joypad_usb_pico PRIVATE
     CONFIG_USB=1
+    CONFIG_PIO_USB_DP_PIN=0
     PICO_DEFAULT_PIO_USB_DP_PIN=0
     BOARD_TUH_RHPORT=1
     USE_BOOTSEL_BUTTON=1
