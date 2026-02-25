@@ -134,7 +134,7 @@ void app_init(void)
     printf("[app:n642usb] Initialization complete\n");
     printf("[app:n642usb]   Routing: N64 -> USB HID Gamepad\n");
     printf("[app:n642usb]   N64 data pin: GPIO%d\n", N64_DATA_PIN);
-    printf("[app:n642usb]   Profiles: %d (Select+DPad to cycle)\n", n642usb_profile_set.profile_count);
+    printf("[app:n642usb]   Profiles: %d (Start+DPad to cycle)\n", n642usb_profile_set.profile_count);
 }
 
 // ============================================================================

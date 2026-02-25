@@ -112,7 +112,7 @@
 #endif
 
 // max device support (excluding hub device): 1 hub typically has 4 ports
-#define CFG_TUH_DEVICE_MAX          (4*CFG_TUH_HUB + 1)
+#define CFG_TUH_DEVICE_MAX          (CFG_TUH_HUB ? 4 : 1)
 
 // Enable endpoint transfer API with callback support (needed for Switch 2 bulk transfers)
 #define CFG_TUH_API_EDPT_XFER       1

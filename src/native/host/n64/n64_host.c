@@ -29,10 +29,12 @@ static uint8_t disconnect_debounce[N64_MAX_PORTS] = {0};  // Debounce brief disc
 
 // Track previous state for edge detection
 static uint32_t prev_buttons[N64_MAX_PORTS] = {0};
-static int8_t prev_stick_x[N64_MAX_PORTS] = {0};
-static int8_t prev_stick_y[N64_MAX_PORTS] = {0};
-static bool prev_l[N64_MAX_PORTS] = {0};
-static bool prev_r[N64_MAX_PORTS] = {0};
+static uint8_t prev_stick_x[N64_MAX_PORTS] = {0};
+static uint8_t prev_stick_y[N64_MAX_PORTS] = {0};
+static uint8_t prev_c_rx[N64_MAX_PORTS] = {0};
+static uint8_t prev_c_ry[N64_MAX_PORTS] = {0};
+static uint8_t prev_lt[N64_MAX_PORTS] = {0};
+static uint8_t prev_rt[N64_MAX_PORTS] = {0};
 
 // ============================================================================
 // BUTTON MAPPING: N64 -> JP
@@ -168,8 +170,8 @@ void n64_host_init_pin(uint8_t data_pin)
     prev_buttons[0] = 0xFFFFFFFF;
     prev_stick_x[0] = 0;
     prev_stick_y[0] = 0;
-    prev_l[0] = 0;
-    prev_r[0] = 0;
+    prev_lt[0] = 0;
+    prev_rt[0] = 0;
     rumble_state[0] = false;
 
     initialized = true;
@@ -234,8 +236,10 @@ void n64_host_task(void)
                     prev_buttons[port] = 0;
                     prev_stick_x[port] = 0;
                     prev_stick_y[port] = 0;
-                    prev_l[port] = 0;
-                    prev_r[port] = 0;
+                    prev_c_rx[port] = 0;
+                    prev_c_ry[port] = 0;
+                    prev_lt[port] = 0;
+                    prev_rt[port] = 0;
                 }
             }
         } else {
@@ -265,8 +269,21 @@ void n64_host_task(void)
             }
         }
 
-        // Skip input processing if poll didn't return data
+        // Submit previous state if poll didn't return data
         if (!success) {
+            input_event_t event;
+            init_input_event(&event);
+            event.dev_addr = 0xE0 + port;  // Use 0xE0+ range for N64 native inputs
+            event.instance = 0;
+            event.type = INPUT_TYPE_GAMEPAD;
+            event.buttons = prev_buttons[port];
+            event.analog[ANALOG_LX] = prev_stick_x[port];
+            event.analog[ANALOG_LY] = prev_stick_y[port];
+            event.analog[ANALOG_RX] = prev_c_rx[port];
+            event.analog[ANALOG_RY] = prev_c_ry[port];
+            event.analog[ANALOG_L2] = prev_lt[port];
+            event.analog[ANALOG_R2] = prev_rt[port];
+            router_submit_input(&event);
             continue;
         }
 
@@ -286,19 +303,13 @@ void n64_host_task(void)
         uint8_t lt, rt;
         map_lr_buttons_to_triggers(&report, &lt, &rt);
 
-        // Only submit if state changed
-        if (buttons == prev_buttons[port] &&
-            report.stick_x == prev_stick_x[port] &&
-            report.stick_y == prev_stick_y[port] &&
-            report.l == prev_l[port] &&
-            report.r == prev_r[port]) {
-            continue;
-        }
         prev_buttons[port] = buttons;
-        prev_stick_x[port] = report.stick_x;
-        prev_stick_y[port] = report.stick_y;
-        prev_l[port] = report.l;
-        prev_r[port] = report.r;
+        prev_stick_x[port] = stick_x;
+        prev_stick_y[port] = stick_y;
+        prev_c_rx[port] = c_rx;
+        prev_c_ry[port] = c_ry;
+        prev_lt[port] = lt;
+        prev_rt[port] = rt;
 
         // Build input event
         input_event_t event;
