@@ -46,7 +46,7 @@ static const button_map_entry_t n642usb_dualstick_map[] = {
 static const button_map_entry_t n642usb_wiiu_map[] = {
     // Hack: N64 "Select" (S1) -> USB Start (S2)
     MAP_BUTTON(JP_BUTTON_S1, JP_BUTTON_S2),
-    MAP_BUTTON(JP_BUTTON_L1, 0),   // nothing
+    MAP_BUTTON(JP_BUTTON_L1, 0),              // nothing
     MAP_BUTTON(JP_BUTTON_L2, JP_BUTTON_L1),   // L -> L1
     MAP_BUTTON(JP_BUTTON_R1, JP_BUTTON_L2),   // Z -> L2
     MAP_BUTTON(JP_BUTTON_R2, JP_BUTTON_R1),   // R -> R1
@@ -56,17 +56,21 @@ static const button_map_entry_t n642usb_wiiu_map[] = {
 // ============================================================================
 // PROFILE 4: WII U VC (Suitable to play Wii U VC)
 // ============================================================================
-// A=B1, C-Down=B2, B=B3, C-Left=B4, C-Up=L3, C-Right=R3
+// A=B2, B=B1, C-Down=B4, C-Left=B3, C-Up=L3, C-Right=R3
 // L=L1, R=R1, Z=L2
 // C-buttons also map to right stick
 
 static const button_map_entry_t n642usb_wiiuvc_map[] = {
     // Hack: N64 "Select" (S1) -> USB Start (S2)
     MAP_BUTTON(JP_BUTTON_S1, JP_BUTTON_S2),
-    MAP_BUTTON(JP_BUTTON_L1, 0),   // nothing
-    MAP_BUTTON(JP_BUTTON_L2, JP_BUTTON_L1),   // L -> L1
-    MAP_BUTTON(JP_BUTTON_R1, JP_BUTTON_L2),   // Z -> L2
-    MAP_BUTTON(JP_BUTTON_R2, JP_BUTTON_R1),   // R -> R1
+    MAP_BUTTON(JP_BUTTON_B1, JP_BUTTON_B2),   // A -> Wii U A
+    MAP_BUTTON(JP_BUTTON_B3, JP_BUTTON_B1),   // B -> Wii U B
+    MAP_BUTTON(JP_BUTTON_B2, JP_BUTTON_B4),   // C-Down -> Wii U X
+    MAP_BUTTON(JP_BUTTON_B4, JP_BUTTON_B3),   // C-Left -> Wii U Y
+    MAP_BUTTON(JP_BUTTON_L1, 0),              // nothing
+    MAP_BUTTON(JP_BUTTON_L2, JP_BUTTON_L1),   // L -> Wii U L
+    MAP_BUTTON(JP_BUTTON_R1, JP_BUTTON_L2),   // Z -> Wii U ZL
+    MAP_BUTTON(JP_BUTTON_R2, JP_BUTTON_R1),   // R -> Wii U R
 
 };
 
@@ -137,9 +141,9 @@ static const profile_t n642usb_profiles[] = {
     // Profile 3: Wii U VC
     {
         .name = "wii u vc",
-        .description = "Wii U VC: L,R and Z to L1, R1 and L2",
+        .description = "Wii U VC: N64 A and B to Wii U A and B, L,R and Z to Wii U L, R and ZL",
         .button_map = n642usb_wiiuvc_map,
-        .button_map_count = sizeof(n642usb_wiiu_map) / sizeof(n642usb_wiiu_map[0]),
+        .button_map_count = sizeof(n642usb_wiiuvc_map) / sizeof(n642usb_wiiuvc_map[0]),
         .combo_map = NULL,
         .combo_map_count = 0,
         //PROFILE_TRIGGERS_DEFAULT,
