@@ -269,21 +269,8 @@ void n64_host_task(void)
             }
         }
 
-        // Submit previous state if poll didn't return data
+        // Skip input processing if poll didn't return data
         if (!success) {
-            input_event_t event;
-            init_input_event(&event);
-            event.dev_addr = 0xE0 + port;  // Use 0xE0+ range for N64 native inputs
-            event.instance = 0;
-            event.type = INPUT_TYPE_GAMEPAD;
-            event.buttons = prev_buttons[port];
-            event.analog[ANALOG_LX] = prev_stick_x[port];
-            event.analog[ANALOG_LY] = prev_stick_y[port];
-            event.analog[ANALOG_RX] = prev_c_rx[port];
-            event.analog[ANALOG_RY] = prev_c_ry[port];
-            event.analog[ANALOG_L2] = prev_lt[port];
-            event.analog[ANALOG_R2] = prev_rt[port];
-            router_submit_input(&event);
             continue;
         }
 
