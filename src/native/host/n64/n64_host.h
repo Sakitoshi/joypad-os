@@ -16,7 +16,7 @@
 
 // Default GPIO pin for N64 controller data line
 #ifndef N64_PIN_DATA
-#define N64_PIN_DATA  18   // Data I/O (directly to controller)
+#define N64_PIN_DATA  4   // Data I/O (directly to controller)
 #endif
 
 // Default polling rate (Hz) - N64 console polls at 60Hz
