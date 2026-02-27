@@ -158,9 +158,12 @@ void app_task(void)
 
     // Forward rumble from USB host to N64 controller via feedback system
     // USB device receives rumble from host PC, N64 controller reads from feedback
-    feedback_state_t* fb = feedback_get_state(0);
-    if (fb && fb->rumble_dirty) {
-        // N64 host will pick this up in its task via feedback_get_state()
-        // Nothing extra needed here - n64_host_task handles it
+    if (usbd_output_interface.get_feedback) {
+        output_feedback_t fb;
+        if (usbd_output_interface.get_feedback(&fb) && fb.dirty) {
+            // Set rumble for player 0 (N64 controller)
+            // Pass actual values so both on AND off commands are applied
+            feedback_set_rumble(0, fb.rumble_left, fb.rumble_right);
+        }
     }
 }

@@ -379,15 +379,16 @@ void n64_host_flush_rumble(void)
             continue;
         }
 
+        last_rumble_time[port] = make_timeout_time_ms(RUMBLE_MIN_INTERVAL_MS);
+
         if (rumble_pending[port]) {
-            // Rate limit: skip if we sent a command too recently
-            if (!time_reached(last_rumble_time[port])) {
-                // Keep pending, will try again next iteration
-                continue;
+            // Rate limit: wait if we sent a command too recently
+            // we don't want to miss a rumble off command
+            while (time_reached(last_rumble_time[port])) {
+                last_rumble_time[port] = make_timeout_time_ms(RUMBLE_MIN_INTERVAL_MS);
             }
 
             rumble_pending[port] = false;
-            last_rumble_time[port] = make_timeout_time_ms(RUMBLE_MIN_INTERVAL_MS);
 
             // Only send rumble if pak was initialized on connect
             if (rumble_pak_initialized[port]) {
