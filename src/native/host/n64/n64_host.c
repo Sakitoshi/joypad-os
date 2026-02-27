@@ -384,7 +384,7 @@ void n64_host_flush_rumble(void)
         if (rumble_pending[port]) {
             // Rate limit: wait if we sent a command too recently
             // we don't want to miss a rumble off command
-            while (time_reached(last_rumble_time[port])) {
+            while (!time_reached(last_rumble_time[port])) {
                 last_rumble_time[port] = make_timeout_time_ms(RUMBLE_MIN_INTERVAL_MS);
             }
 
