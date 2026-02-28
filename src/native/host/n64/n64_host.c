@@ -26,6 +26,8 @@ static bool rumble_pending[N64_MAX_PORTS] = {false};  // Deferred rumble update 
 static bool rumble_pak_initialized[N64_MAX_PORTS] = {false};  // Track pak init state
 static uint8_t connected_polls[N64_MAX_PORTS] = {0};  // Count polls after connect for pak init
 static uint8_t disconnect_debounce[N64_MAX_PORTS] = {0};  // Debounce brief disconnects
+static feedback_state_t* feedback;
+static uint8_t rumble_pwm = {0};
 
 // Track previous state for edge detection
 static uint32_t prev_buttons[N64_MAX_PORTS] = {0};
@@ -119,6 +121,48 @@ static void map_lr_buttons_to_triggers(const n64_report_t* report, uint8_t* lt, 
     if (report->r) *rt = 255;
 }
 
+static void rumble_speed(uint8_t port)
+{
+    if (feedback->rumble.left == 0 && feedback->rumble.right == 0) {
+        rumble_pwm = 0;
+        rumble_state[port] = false;
+        return;
+    }
+
+    if (feedback->rumble.left == 255 || feedback->rumble.right == 255) {
+        rumble_pwm = 0;
+        rumble_state[port] = true;
+        return;
+    }
+
+    if (rumble_pwm == 0) {
+        if ((feedback->rumble.left < 255 && feedback->rumble.left >= 192) ||
+            (feedback->rumble.right < 255 && feedback->rumble.right >= 192)) {
+            rumble_pwm = 11; // rumble pattern 110
+        } else if ((feedback->rumble.left < 192 && feedback->rumble.left >= 128) ||
+            (feedback->rumble.right < 192 && feedback->rumble.right >= 128)) {
+            rumble_pwm = 1; // rumble pattern 10
+        } else if ((feedback->rumble.left < 128 && feedback->rumble.left >= 64) ||
+                   (feedback->rumble.right < 128 && feedback->rumble.right >= 64)) {
+            rumble_pwm = 2; // rumble pattern 100
+        } else if ((feedback->rumble.left < 64 && feedback->rumble.left > 0) ||
+                   (feedback->rumble.right < 64 && feedback->rumble.right > 0)) {
+            rumble_pwm = 3; // rumble pattern 1000
+        }
+        rumble_state[port] = true;
+        return;
+    }
+
+    if (rumble_pwm > 10) {
+        rumble_pwm -= 10;
+        rumble_state[port] = true;
+        return;
+    }
+        
+    if (rumble_pwm > 0) rumble_pwm--;
+    rumble_state[port] = false;
+}
+
 // ============================================================================
 // PUBLIC API
 // ============================================================================
@@ -184,16 +228,7 @@ void n64_host_task(void)
 
     // Check feedback system for rumble updates (works with any output: DC, USB, etc.)
     for (int port = 0; port < N64_MAX_PORTS; port++) {
-        feedback_state_t* feedback = feedback_get_state(port);
-        if (feedback && feedback->rumble_dirty) {
-            // N64 rumble is binary (on/off), use max of left/right motors
-            bool want_rumble = (feedback->rumble.left > 0 || feedback->rumble.right > 0);
-            if (want_rumble != rumble_state[port]) {
-                n64_host_set_rumble(port, want_rumble);
-            }
-            // Clear dirty flag after processing
-            feedback_clear_dirty(port);
-        }
+        feedback = feedback_get_state(port);
     }
 
     for (int port = 0; port < N64_MAX_PORTS; port++) {
@@ -254,7 +289,7 @@ void n64_host_task(void)
 
         // Init rumble pak ONCE after first stable connection
         // Don't re-init on brief disconnects (pak commands can cause poll failures)
-        if (is_connected && connected_polls[port] > 0 && connected_polls[port] < 255) {
+        if (is_connected && connected_polls[port] > 0) {
             connected_polls[port]++;
 
             // Init pak after 10 polls (~170ms at 60Hz), only if never initialized
@@ -267,6 +302,8 @@ void n64_host_task(void)
                     }
                 }
             }
+        } else if (is_connected && connected_polls[port] == 21) {
+            connected_polls[port] = 1;
         }
 
         // Skip input processing if poll didn't return data
@@ -355,8 +392,8 @@ void n64_host_set_rumble(uint8_t port, bool enabled)
     if (!initialized) return;
 
     // Only mark pending if state actually changes
-    if (rumble_state[port] == enabled) return;
-    rumble_state[port] = enabled;
+    //if (rumble_state[port] == enabled) return;
+    //rumble_state[port] = enabled;
 
     // Mark as pending - actual send deferred to n64_host_flush_rumble()
     // This prevents blocking the main loop before Dreamcast response
@@ -379,20 +416,13 @@ void n64_host_flush_rumble(void)
             continue;
         }
 
-        last_rumble_time[port] = make_timeout_time_ms(RUMBLE_MIN_INTERVAL_MS);
-
-        if (rumble_pending[port]) {
-            // Rate limit: wait if we sent a command too recently
-            // we don't want to miss a rumble off command
-            while (!time_reached(last_rumble_time[port])) {
-                last_rumble_time[port] = make_timeout_time_ms(RUMBLE_MIN_INTERVAL_MS);
-            }
-
-            rumble_pending[port] = false;
-
+        // Rate limit: sent a command every 20 polls (~50ms)
+        if (connected_polls[port] == 21) {
             // Only send rumble if pak was initialized on connect
             if (rumble_pak_initialized[port]) {
+                rumble_speed(port);
                 N64Controller_SetRumble(&n64_controllers[port], rumble_state[port]);
+                feedback_clear_dirty(port);
             }
         }
     }
